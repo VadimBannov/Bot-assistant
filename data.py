@@ -30,11 +30,22 @@ user_data = load_user_data()
 
 def record_user_data(data):
     user_id = str(data.from_user.id)
-    dictionary_with_initial_data = {"username": data.from_user.username, "first_name": data.from_user.first_name,
-                                    "last_name": data.from_user.last_name, "progress": "user_first_response"}
+    dictionary_with_initial_data = {"first_name": data.from_user.first_name,
+                                    "system_content": "Ты - дружелюбный бот-рассказчик, Ты должен писать "
+                                                      "небольшой рассказ, исходя из промта "
+                                                      "пользователя на русском языке",
+                                    "user_request": "", "assistant_content": "Вот ваш рассказ: "}
     if user_id not in user_data:
         user_data[user_id] = dictionary_with_initial_data
     else:
         del user_data[user_id]
         user_data[user_id] = dictionary_with_initial_data
+    save_user_data(user_data)
+
+
+def saving_data(message, key_name="", data=""):
+    global user_data
+    user_id = str(message.from_user.id)
+    user_info = user_data.get(user_id, {})
+    user_info[key_name] = data
     save_user_data(user_data)

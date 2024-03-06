@@ -1,8 +1,8 @@
 {
     "904566016": {
-        "username": "KorolevskayaKaply",
         "first_name": "Вадим",
-        "last_name": "Баннов",
-        "progress": "user_first_response"
+        "system_content": "Ты - дружелюбный бот-рассказчик, Ты должен писать небольшой рассказ, исходя из промта пользователя на русском языке",
+        "user_request": "",
+        "assistant_content": "Вот ваш рассказ: "
     }
 }

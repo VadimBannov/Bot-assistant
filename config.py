@@ -1,9 +1,10 @@
 BOT_TOKEN = ""  # подставь свой токен
 
-endpoint = ""  # подставь свой эндпоинт
+GPT_LOCAL_URL = ""  # подставь свой эндпоинт
+HEADERS = {"Content-Type": "application/json"}
+MAX_TOKENS = 100
 
 image_addresses = {
-    "Картинки": {
-        "1": "https://ibb.co/ngLYSnF"
-    }
+    0: "https://ibb.co/ngLYSnF"
 }
+

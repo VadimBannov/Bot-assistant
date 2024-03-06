@@ -1,58 +1,56 @@
-from transformers import AutoTokenizer
 import requests
-import logging
-from config import endpoint
+from transformers import AutoTokenizer
+from config import *
 
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+class GPT:
+    def __init__(self, system_content="?"):
+        self.system_content = system_content
+        self.URL = GPT_LOCAL_URL
+        self.HEADERS = HEADERS
+        self.MAX_TOKENS = MAX_TOKENS
+        self.assistant_content = "?"
 
+    @staticmethod
+    def count_tokens(prompt):
+        tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")  # название модели
+        return len(tokenizer.encode(prompt))
 
-def generate_story(task):
-    system_content = ("Ты - дружелюбный бот-рассказчик, Твоя задача писать маленькие рассказы, исходя из промтов "
-                      "пользователей на русском языке")
-    assistant_content = "Проложи предыдущий рассказ... "
-    max_tokens = 2048
+    @staticmethod
+    def process_resp(response) -> [bool, str]:
+        if response.status_code < 200 or response.status_code >= 300:
+            return False, f"Ошибка: {response.status_code}"
+        try:
+            full_response = response.json()
+        except ValueError:
+            return False, "Ошибка получения JSON"
 
-    def count_token(text):
-        tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2")
-        return len(tokenizer.encode(text))
+        if "error" in full_response or 'choices' not in full_response:
+            return False, f"Ошибка: {full_response}"
 
-    def get_answer_from_gpt(user_promt, previous_answer=""):
-        answer = previous_answer
-        while True:
-            if count_token(user_promt) > max_tokens:
-                return None, "Текст задачи слишком длинный!"
+        result = full_response['choices'][0]['message']['content']
 
-            if user_promt == 'Завершить':
-                return "Хорошо, доброго вам дня!"
+        if result == "":
+            return True, "Конец объяснения"
 
-            if user_promt != "Продолжить":
-                answer = ""
+        return str(result)
 
-            resp = requests.post(
-                endpoint,
-                headers={"Content-Type": "application/json"},
-                json={
-                    "messages": [
-                        {"role": "system", "content": system_content},
-                        {"role": "user", "content": user_promt},
-                        {"role": "assistant", "content": assistant_content + answer},
-                    ],
-                    "temperature": 1,
-                    "max_tokens": max_tokens
-                }
-            )
+    def make_promt(self, user_history):
+        json = {
+            "messages": [
+                {"role": "system", "content": user_history['system_content']},
+                {"role": "user", "content": user_history['user_request']},
+                {"role": "assistant", "content": user_history['assistant_content']}
+            ],
+            "temperature": 1.2,
+            "max_tokens": self.MAX_TOKENS,
+        }
+        return json
 
-            if resp.status_code == 200 and 'choices' in resp.json():
-                result = resp.json()['choices'][0]['message']['content']
-                if result == "":
-                    return answer
-                else:
-                    answer += " " + result
-                    return result
-            else:
-                return None, f"Не удалось получить ответ от нейросети. Текст ошибки: {resp.text}"
+    def send_request(self, json):
+        resp = requests.post(url=self.URL, headers=self.HEADERS, json=json)
+        return resp
 
-    return get_answer_from_gpt(task)
+    @staticmethod
+    def save_history(assistant_content, content_response):
+        return f"{assistant_content} {content_response}"
